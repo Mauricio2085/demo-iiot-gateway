@@ -1,0 +1,44 @@
+services:
+  # 1. Broker MQTT
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: iiot-mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+    networks:
+      - iiot-network
+
+  # 2. Gateway Node-RED
+  nodered:
+    image: nodered/node-red:latest
+    container_name: iiot-nodered
+    ports:
+      - "1880:1880"
+    environment:
+      - TZ=America/Bogota
+    volumes:
+      - nodered-data:/data
+    networks:
+      - iiot-network
+    depends_on:
+      - mosquitto
+
+  # 3. Simulador Industrial (TypeScript)
+  simulator:
+    build: ./simulator
+    container_name: iiot-simulator
+    ports:
+      - "5020:5020" # Puerto Modbus TCP alternativo
+    networks:
+      - iiot-network
+    depends_on:
+      - mosquitto
+
+volumes:
+  nodered-data:
+
+networks:
+  iiot-network:
+    driver: bridge
